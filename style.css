@@ -1227,3 +1227,61 @@ h2 {
   white-space: nowrap;
   border: 0;
 }
+/* Enhanced Success Notification */
+.success-notification.enhanced {
+    background: white;
+    color: #2d5016;
+    border-left: 4px solid #4CAF50;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    padding: 20px;
+    max-width: 400px;
+}
+
+.success-notification.enhanced h3 {
+    color: #2d5016;
+    margin-bottom: 10px;
+}
+
+/* Mobile Cart Full Display */
+@media (max-width: 768px) {
+    #cart-dropdown {
+        width: 95vw;
+        height: 85vh;
+        right: 2.5vw;
+        left: 2.5vw;
+        top: 10vh;
+        bottom: 10vh;
+        border-radius: 15px;
+        padding: 20px;
+    }
+    
+    #cart-items {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    
+    /* Close button for mobile cart */
+    .cart-close-mobile {
+        display: block;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #666;
+        cursor: pointer;
+        z-index: 1002;
+    }
+}
+
+/* Hide cart count when dropdown is open */
+#cart-count.hidden {
+    display: none !important;
+}
+
+/* Ensure cart count is visible by default */
+#cart-count {
+    display: flex !important;
+}
+
