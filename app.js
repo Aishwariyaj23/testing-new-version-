@@ -510,10 +510,13 @@ function optimizeImages() {
     
     images.forEach(img => {
         img.setAttribute('loading', 'lazy');
+        img.setAttribute('decoding', 'async');
         
         img.addEventListener('error', function() {
+            console.warn('Image failed to load:', this.src);
             this.src = 'images/placeholder.jpg';
             this.alt = 'Image not available';
+            this.style.opacity = '1';
         });
         
         if (!img.complete) {
@@ -522,6 +525,8 @@ function optimizeImages() {
                 this.style.transition = 'opacity 0.3s ease';
                 this.style.opacity = '1';
             });
+        } else {
+            img.style.opacity = '1';
         }
     });
 }
@@ -530,11 +535,11 @@ function optimizeImages() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM fully loaded - initializing application');
 
-    // Initialize cart from localStorage
+    // Initialize cart first
     cart = storedCart ? JSON.parse(storedCart) : [];
     console.log('Cart initialized with:', cart);
 
-    // Initialize all functionality
+    // Then initialize all functionality
     initializeModal();
     initializeCart();
     setupProductQuantity();
@@ -543,9 +548,10 @@ document.addEventListener('DOMContentLoaded', function() {
     loadLogo();
     optimizeImages();
 
-    // Initialize new features
+    // Initialize form validation and delivery
     setupFormValidation();
     setupDeliveryOptions();
+    setupMobileCartClose(); // Add this
 });
 
 // ========== LOGO LOADING ========== //
@@ -700,17 +706,36 @@ function initializeModal() {
 
 // ========== CART FUNCTIONS ========== //
 function initializeCart() {
-    document.getElementById('cart-icon').addEventListener('click', function(event) {
+    const cartIcon = document.getElementById('cart-icon');
+    const cartDropdown = document.getElementById('cart-dropdown');
+    
+    // Toggle cart dropdown
+    cartIcon.addEventListener('click', function(event) {
         event.stopPropagation();
-        document.getElementById('cart-dropdown').classList.toggle('show');
+        cartDropdown.classList.toggle('show');
+        
+        // Hide cart count when dropdown is open
+        const cartCount = document.getElementById('cart-count');
+        if (cartDropdown.classList.contains('show')) {
+            cartCount.style.display = 'none';
+        } else {
+            cartCount.style.display = 'flex';
+        }
     });
 
     // Close cart dropdown if clicking outside
     document.addEventListener('click', function(event) {
         const cartContainer = document.getElementById('cart-container');
-        const cartDropdown = document.getElementById('cart-dropdown');
         if (cartDropdown.classList.contains('show') && !cartContainer.contains(event.target)) {
-            cartDropdown.classList.remove('show');
+            closeCartDropdown();
+        }
+    });
+
+    // Close cart when clicking on close button in mobile
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('close-cart') || 
+            event.target.closest('.close-cart')) {
+            closeCartDropdown();
         }
     });
 
@@ -718,7 +743,7 @@ function initializeCart() {
 
     document.getElementById('view-cart').addEventListener('click', function() {
         showCheckoutModal();
-        document.getElementById('cart-dropdown').classList.remove('show');
+        closeCartDropdown();
     });
 
     document.getElementById('checkout-btn').addEventListener('click', function() {
@@ -727,8 +752,16 @@ function initializeCart() {
             return;
         }
         showCheckoutModal();
-        document.getElementById('cart-dropdown').classList.remove('show');
+        closeCartDropdown();
     });
+}
+
+function closeCartDropdown() {
+    const cartDropdown = document.getElementById('cart-dropdown');
+    const cartCount = document.getElementById('cart-count');
+    
+    cartDropdown.classList.remove('show');
+    cartCount.style.display = 'flex';
 }
 
 function setupProductQuantity() {
@@ -803,7 +836,7 @@ function clearCart() {
     cart = [];
     localStorage.removeItem('microgreensCart');
     updateCartDisplay();
-    document.getElementById('cart-dropdown').classList.remove('show');
+    closeCartDropdown();
     document.getElementById('checkout-modal').style.display = 'none';
     document.body.style.overflow = 'auto';
 }
@@ -1025,7 +1058,29 @@ function showQRCodeFallback(qrContainer, total) {
         window.open(upiLink, '_blank');
     });
 }
+// Show/hide mobile close button based on screen size
+function setupMobileCartClose() {
+    const closeBtn = document.querySelector('.cart-close-mobile');
+    const cartDropdown = document.getElementById('cart-dropdown');
+    
+    function checkScreenSize() {
+        if (window.innerWidth <= 768) {
+            closeBtn.style.display = 'block';
+        } else {
+            closeBtn.style.display = 'none';
+        }
+    }
+    
+    // Check on load and resize
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+}
 
+// Call this in your DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    // ... your existing code
+    setupMobileCartClose();
+});
 function updateCheckoutItems() {
     const itemsContainer = document.getElementById('checkout-items');
     itemsContainer.innerHTML = '';
@@ -1159,54 +1214,37 @@ function generateOrderSummary() {
 
 async function handleOrderSuccess(orderId, orderData) {
     showOrderConfirmation(orderId, orderData.amount);
-    await sendEnhancedWhatsAppConfirmation(orderId, orderData);
+    
+    // Show enhanced success notification instead of WhatsApp
+    showEnhancedSuccessNotification(orderId, orderData);
+    
     clearCart();
     updateCartDisplay();
-    showSuccessNotification(`Order #${orderId} placed successfully! Confirmation sent to WhatsApp.`);
 }
 
-async function sendEnhancedWhatsAppConfirmation(orderId, orderData) {
-    const phone = orderData.phone.replace(/\D/g, '');
-    const whatsappNumber = phone.startsWith('91') ? phone : `91${phone}`;
+function showEnhancedSuccessNotification(orderId, orderData) {
+    const notification = document.createElement('div');
+    notification.className = 'success-notification enhanced';
+    notification.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 10px;">✅</div>
+            <h3 style="margin: 0 0 10px 0; color: #2d5016;">Order Confirmed!</h3>
+            <p style="margin: 5px 0; font-weight: bold;">Order ID: #${orderId}</p>
+            <p style="margin: 5px 0;">Total Amount: ₹${parseFloat(orderData.amount).toFixed(2)}</p>
+            <p style="margin: 5px 0; font-size: 0.9rem; color: #666;">
+                We'll contact you shortly with delivery details.
+            </p>
+        </div>
+    `;
+    document.body.appendChild(notification);
     
-    if (whatsappNumber.length >= 10) {
-        let message = `🌱 *Aishaura Microgreens - Order Confirmation* 🌱\n\n`;
-        message += `Namaskara ${orderData.name}! Thank you for your order.\n\n`;
-        message += `📦 *ORDER #${orderId}*\n`;
-        
-        if (orderData.delivery_date) {
-            message += `📅 *Delivery Date:* ${formatDeliveryDate(orderData.delivery_date)}\n`;
-        }
-        
-        message += `📍 *Delivery Address:* ${orderData.address}\n`;
-        message += `📞 *Contact:* ${orderData.phone}\n\n`;
-        
-        message += `*Your Order:*\n`;
-        JSON.parse(orderData.products).forEach(item => {
-            const itemTotal = (item.quantity / 50) * item.price;
-            message += `• ${item.product} - ${item.quantity}g = ₹${itemTotal.toFixed(2)}\n`;
-        });
-        
-        message += `\n*Order Summary:*\n`;
-        message += `Subtotal: ₹${orderData.amount}\n`;
-        message += `Delivery: FREE\n`;
-        message += `*Total: ₹${orderData.amount}*\n\n`;
-        
-        message += `💳 *Payment Method:* ${orderData.payment_method.toUpperCase()}\n`;
-        
-        if (orderData.payment_method === 'upi') {
-            message += `\n*UPI Payment Details:*\n`;
-            message += `UPI ID: ${UPI_ID}\n`;
-            message += `Amount: ₹${orderData.amount}\n`;
-            message += `Please complete payment to confirm your order.\n`;
-        }
-        
-        message += `\nWe'll notify you when your order is out for delivery.\n`;
-        message += `Thank you for choosing Aishaura Microgreens! ❤️`;
-        
-        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
-    }
+    setTimeout(() => {
+        notification.classList.add('show');
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => document.body.removeChild(notification), 300);
+        }, 5000); // Show for 5 seconds
+    }, 10);
 }
 
 function formatDeliveryDate(dateString) {
@@ -1251,9 +1289,38 @@ function showErrorNotification(message) {
     }, 10);
 }
 
-// ========== ORDER CONFIRMATION ========== //
+// Force center the checkout modal
+function centerCheckoutModal() {
+    const checkoutModal = document.getElementById('checkout-modal');
+    const modalContent = checkoutModal.querySelector('.modal-content');
+    
+    if (modalContent) {
+        modalContent.style.cssText = `
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            margin: 0 !important;
+            width: 90% !important;
+            max-width: 600px !important;
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+        `;
+    }
+}
+
+// Call this when showing the checkout modal
+function showCheckoutModal() {
+    document.getElementById('checkout-modal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    showCheckoutStep(1);
+    centerCheckoutModal(); // Add this line
+}
+
+// Also call it when showing order confirmation
 function showOrderConfirmation(orderId, total) {
-    document.getElementById('confirmation-id').textContent = `#${orderId}`;
+    document.getElementById('confirmation-id').textContent = orderId;
     document.getElementById('confirmation-total').textContent = `₹${parseFloat(total).toFixed(2)}`;
     showCheckoutStep(4);
+    centerCheckoutModal(); // Add this line
 }
