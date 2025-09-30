@@ -32,7 +32,19 @@
     <button id="clear-cart">Clear Cart</button>
   </div>
 </div>
-
+<div id="cart-dropdown">
+    <button class="cart-close-mobile close-cart" style="display: none;">×</button>
+    <button class="close-cart cart-close-mobile" style="display: none;">×</button>
+    <div id="cart-items"></div>
+    <div id="cart-summary">
+        <div>Subtotal: <span id="cart-subtotal">₹0</span></div>
+        <div>Delivery: <span id="cart-delivery">FREE</span></div>
+        <div id="cart-total">Total: ₹0</div>
+    </div>
+    <button id="view-cart">View Cart</button>
+    <button id="checkout-btn">Proceed to Checkout</button>
+    <button id="clear-cart">Clear Cart</button>
+</div>
 <!-- Burger Menu Button -->
 <div class="burger-menu" id="burger-menu">
   <div class="burger-line"></div>
@@ -290,7 +302,6 @@
         <p style="color: #666; margin: 0; font-size: 0.9rem;">See our latest harvests and recipes</p>
         <div style="display: flex; justify-content: center; gap: 15px; margin-top: 15px;">
           <a href="https://instagram.com/aishaura_microgreens" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: #f0f9f0; color: #E1306C; text-decoration: none; transition: all 0.3s ease;">IG</a>
-          <a href="#" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: #f0f9f0; color: #3b5998; text-decoration: none; transition: all 0.3s ease;">FB</a>
         </div>
       </div>
 
@@ -352,9 +363,8 @@
     
     <!-- Map Section -->
     <div style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 40px;">
-      <div style="padding: 20px; text-align: center; font-weight: 600; color: #2d5016; border-bottom: 1px solid #eee;">We Serve Bangalore Area</div>
-      <div style="height: 300px; background: #e9f5e9; display: flex; align-items: center; justify-content: center; color: #5a7c3e; font-size: 1.2rem;">
-        <p>📍 Delivery available throughout Bangalore</p>
+      <div style="padding: 20px; text-align: center; font-weight: 600; color: #2d5016; border-bottom: 1px solid #eee;">We currently serve customers across Bangalore.</div>
+      
       </div>
     </div>
   </div>
@@ -522,15 +532,7 @@
             <textarea id="customer-address" rows="3" required placeholder="Full address with street, landmark, and pincode"></textarea>
           </div>
           
-          <!-- New Pincode Validation -->
-          <div class="form-group">
-            <label for="customer-pincode" class="required">Pincode</label>
-            <div style="display: flex; gap: 10px;">
-              <input type="text" id="customer-pincode" maxlength="6" required placeholder="Enter 6-digit pincode" style="flex: 1;">
-              <button type="button" id="check-pincode" class="btn-small">Check Delivery</button>
-            </div>
-            <div id="pincode-message" style="display: none;"></div>
-          </div>
+          
           
           <div class="form-group">
             <label for="customer-notes">Special Instructions</label>
@@ -548,21 +550,7 @@
       <div class="checkout-step" id="step-3" style="display:none;">
         <h2>Payment Details</h2>
         <div class="payment-options">
-          <div class="payment-option active" data-method="upi">
-            <div class="payment-icon">💳</div>
-            <div class="payment-details">
-              <h3>UPI Payment</h3>
-              <div id="upi-qr-wrapper" style="display:flex; justify-content:center; margin:15px 0;">
-                <div id="upi-qr-code"></div>
-              </div>
-              <p>Pay instantly using any UPI app</p>
-              <div class="upi-details" id="upi-details">
-                <p>Scan this QR code or click below to pay with any UPI app:</p>
-                <div class="upi-id">UPI ID: 9738560719-0@airtel</div>
-                <button class="upi-pay-button" id="upi-pay-button">Pay with UPI App</button>
-              </div>
-            </div>
-          </div>
+          
           <div class="payment-option" data-method="cod">
             <div class="payment-icon">💰</div>
             <div class="payment-details">
@@ -591,7 +579,7 @@
         <div class="confirmation-message">
           <p>Thank you for your order! Your order ID is <span id="confirmation-id"></span>.</p>
           <p>Total amount: <span id="confirmation-total"></span></p>
-          <p>We'll contact you shortly with delivery details.</p>
+          <p>We'll contact you shortly with delivery and the payment details shortly.</p>
         </div>
         <div class="checkout-actions">
           <button type="button" class="btn-continue" onclick="document.getElementById('checkout-modal').style.display='none'">Continue Shopping</button>
